@@ -6,7 +6,8 @@
       "PowerShell(cmdkey /delete:git:https://github.com 2>&1)",
       "Bash(git remote *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git pull *)"
     ]
   }
 }
