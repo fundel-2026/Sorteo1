@@ -285,23 +285,27 @@
   function lsGetAll()      { try{ return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); }catch{ return []; } }
   function lsSave(p)       { const l=lsGetAll(); l.push(p); localStorage.setItem(LS_KEY,JSON.stringify(l)); }
 
-  // ── Remote helpers ──
+  // ── Remote helpers (todo por GET para evitar CORS) ──
   async function remoteGetAll() {
     try {
-      const r = await fetch(ENDPOINT, { redirect:'follow' });
+      const r = await fetch(ENDPOINT + '?action=list', { redirect:'follow' });
       const j = await r.json();
       return j.ok ? j.participants : [];
     } catch { return []; }
   }
 
   async function remotePost(data) {
-    // no-cors: datos se guardan pero no podemos leer la respuesta
-    await fetch(ENDPOINT, {
-      method: 'POST',
-      mode:   'no-cors',
-      headers:{ 'Content-Type':'application/json' },
-      body:    JSON.stringify(data)
+    const params = new URLSearchParams({
+      action:   'add',
+      nombre:   data.nombre,
+      email:    data.email,
+      telefono: data.telefono || '',
+      ticket:   data.ticket,
+      id:       data.id,
+      fecha:    data.fecha
     });
+    const r = await fetch(ENDPOINT + '?' + params.toString(), { redirect:'follow' });
+    return await r.json();
   }
 
   // ── Obtener participantes (remoto o local) ──
@@ -371,7 +375,13 @@
 
       // 3. Guardar
       if (USE_REMOTE) {
-        await remotePost(participant);
+        const res = await remotePost(participant);
+        if (res.duplicate) {
+          setErr('f-email','e-email', `Este correo ya está registrado (Ticket #${res.ticket})`);
+          btn.classList.remove('loading'); btn.disabled = false;
+          return;
+        }
+        if (!res.ok) throw new Error('Error del servidor');
       } else {
         lsSave(participant);
       }

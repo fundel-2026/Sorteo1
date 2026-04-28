@@ -1,35 +1,40 @@
 // ══════════════════════════════════════════════════════════
 //  SORTEO APP — Google Apps Script Backend
-//  Instrucciones:
-//  1. Ve a sheets.new → crea una hoja nueva
-//  2. Menú: Extensiones → Apps Script
-//  3. Borra el código que hay y pega TODO este archivo
-//  4. Clic en "Implementar" → "Nueva implementación"
-//     · Tipo: Aplicación web
-//     · Ejecutar como: Yo
-//     · Quién tiene acceso: Cualquier persona
-//  5. Copia la URL que aparece y pégala en index.html y admin.html
-//     donde dice: const ENDPOINT = '...';
+//  INSTRUCCIONES:
+//  1. En tu Google Sheet ve a Extensiones → Apps Script
+//  2. Borra el código anterior y pega este completo
+//  3. Clic en "Implementar" → "Administrar implementaciones"
+//     → Edita la implementación existente → Nueva versión → Implementar
+//  (Si es la primera vez: Implementar → Nueva implementación →
+//   Tipo: App web · Ejecutar como: Yo · Acceso: Cualquier persona)
 // ══════════════════════════════════════════════════════════
 
 const HOJA = 'Participantes';
 
 function iniciarHoja_() {
-  const ss    = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet   = ss.getSheetByName(HOJA);
+  const ss  = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(HOJA);
   if (!sheet) {
     sheet = ss.insertSheet(HOJA);
     sheet.appendRow(['Fecha', 'Nombre', 'Email', 'Teléfono', 'Ticket', 'ID']);
-    sheet.getRange(1, 1, 1, 6).setFontWeight('bold').setBackground('#7C3AED').setFontColor('#ffffff');
-    sheet.setColumnWidth(1, 180);
-    sheet.setColumnWidth(2, 200);
-    sheet.setColumnWidth(3, 220);
+    sheet.getRange(1, 1, 1, 6).setFontWeight('bold')
+         .setBackground('#7C3AED').setFontColor('#ffffff');
   }
   return sheet;
 }
 
-/* ── GET: devuelve todos los participantes ── */
+/* ── Todo entra por GET para evitar problemas de CORS ── */
 function doGet(e) {
+  const action = (e.parameter.action || 'list');
+
+  if (action === 'add') {
+    return agregarParticipante_(e.parameter);
+  }
+  return listarParticipantes_();
+}
+
+/* ── Listar participantes ── */
+function listarParticipantes_() {
   try {
     const sheet   = iniciarHoja_();
     const lastRow = sheet.getLastRow();
@@ -49,53 +54,46 @@ function doGet(e) {
         }));
     }
 
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: true, participants }))
-      .setMimeType(ContentService.MimeType.JSON);
-
-  } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: false, error: err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return out_({ ok: true, participants });
+  } catch(err) {
+    return out_({ ok: false, error: err.message });
   }
 }
 
-/* ── POST: agrega un participante ── */
-function doPost(e) {
+/* ── Agregar participante ── */
+function agregarParticipante_(p) {
   try {
-    const sheet = iniciarHoja_();
-    const data  = JSON.parse(e.postData.contents);
-
-    // Verificar duplicado por email
+    const sheet   = iniciarHoja_();
     const lastRow = sheet.getLastRow();
+
+    // Verificar email duplicado
     if (lastRow > 1) {
-      const emails = sheet.getRange(2, 3, lastRow - 1, 1).getValues().flat()
-                         .map(x => String(x).toLowerCase().trim());
-      if (emails.includes(data.email.toLowerCase().trim())) {
-        const idx     = emails.indexOf(data.email.toLowerCase().trim());
-        const tickets = sheet.getRange(2, 5, lastRow - 1, 1).getValues().flat();
-        return ContentService
-          .createTextOutput(JSON.stringify({ ok: false, duplicate: true, ticket: tickets[idx] }))
-          .setMimeType(ContentService.MimeType.JSON);
+      const emails  = sheet.getRange(2, 3, lastRow - 1, 1).getValues().flat()
+                           .map(x => String(x).toLowerCase().trim());
+      const tickets = sheet.getRange(2, 5, lastRow - 1, 1).getValues().flat();
+      const idx     = emails.indexOf(p.email.toLowerCase().trim());
+      if (idx !== -1) {
+        return out_({ ok: false, duplicate: true, ticket: tickets[idx] });
       }
     }
 
     sheet.appendRow([
       new Date().toISOString(),
-      data.nombre,
-      data.email,
-      data.telefono || '',
-      data.ticket,
-      data.id
+      p.nombre    || '',
+      p.email     || '',
+      p.telefono  || '',
+      p.ticket    || '',
+      p.id        || ''
     ]);
 
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: true, ticket: data.ticket }))
-      .setMimeType(ContentService.MimeType.JSON);
-
-  } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: false, error: err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return out_({ ok: true, ticket: p.ticket });
+  } catch(err) {
+    return out_({ ok: false, error: err.message });
   }
+}
+
+function out_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }

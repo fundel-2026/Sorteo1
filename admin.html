@@ -324,7 +324,7 @@
   function lsAddWin(p)   { const w=lsGetWins(); w.push({...p,drawnAt:new Date().toISOString()}); localStorage.setItem(WIN_KEY,JSON.stringify(w)); }
 
   async function remoteGetAll() {
-    const r = await fetch(ENDPOINT, { redirect:'follow' });
+    const r = await fetch(ENDPOINT + '?action=list', { redirect:'follow' });
     const j = await r.json();
     return j.ok ? j.participants : [];
   }
