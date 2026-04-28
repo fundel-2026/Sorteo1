@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Sorteo — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary:       #7C3AED;
+      --primary-light: #A78BFA;
+      --secondary:     #EC4899;
+      --bg:            #08081A;
+      --bg-card:       rgba(255,255,255,.045);
+      --text:          #F1F5F9;
+      --muted:         #94A3B8;
+      --border:        rgba(255,255,255,.09);
+      --success:       #10B981;
+      --error:         #EF4444;
+      --warning:       #F59E0B;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background ── */
+    .bg-wrap {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 55% 55% at 10% 30%, rgba(124,58,237,.14) 0%, transparent 70%),
+        radial-gradient(ellipse 45% 45% at 90% 70%, rgba(236,72,153,.10) 0%, transparent 65%);
+    }
+
+    /* ── Login Gate ── */
+    #login-gate {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(8,8,26,.97);
+      backdrop-filter: blur(20px);
+    }
+
+    .login-box {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 24px;
+      padding: 2.5rem 2.25rem;
+      width: 100%; max-width: 380px;
+      box-shadow: 0 40px 80px rgba(0,0,0,.5);
+      animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(.88); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .login-icon {
+      width: 60px; height: 60px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 18px; margin: 0 auto 1.5rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.75rem;
+      box-shadow: 0 8px 24px rgba(124,58,237,.4);
+    }
+
+    .login-title { text-align: center; font-size: 1.35rem; font-weight: 700; margin-bottom: .3rem; }
+    .login-sub   { text-align: center; font-size: .85rem; color: var(--muted); margin-bottom: 1.75rem; }
+
+    .login-input {
+      width: 100%; padding: .85rem 1rem;
+      background: rgba(255,255,255,.06);
+      border: 1.5px solid rgba(255,255,255,.1);
+      border-radius: 12px; color: var(--text);
+      font-size: .97rem; font-family: 'Inter', sans-serif;
+      outline: none; transition: border .25s, box-shadow .25s;
+      margin-bottom: 1rem;
+    }
+
+    .login-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(124,58,237,.15);
+    }
+
+    .login-input.shake { animation: shake .35s ease; }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%,60% { transform: translateX(-6px); }
+      40%,80% { transform: translateX(6px); }
+    }
+
+    .btn-login {
+      width: 100%; padding: .9rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: none; border-radius: 12px;
+      color: #fff; font-size: .97rem; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .btn-login:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(124,58,237,.45); }
+
+    .login-hint { text-align: center; margin-top: 1rem; font-size: .78rem; color: rgba(148,163,184,.5); }
+
+    /* ── App shell ── */
+    #app { display: none; }
+
+    nav {
+      position: sticky; top: 0; z-index: 30;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.1rem 2rem;
+      background: rgba(8,8,26,.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: .55rem;
+      font-weight: 800; font-size: 1.15rem;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; box-shadow: 0 4px 14px rgba(124,58,237,.4);
+    }
+
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+
+    .nav-badge {
+      padding: .3rem .85rem;
+      background: rgba(124,58,237,.15);
+      border: 1px solid rgba(124,58,237,.3);
+      border-radius: 100px;
+      font-size: .78rem; font-weight: 600; color: var(--primary-light);
+    }
+
+    .btn-logout {
+      padding: .4rem 1rem;
+      background: transparent;
+      border: 1px solid rgba(239,68,68,.3);
+      border-radius: 8px; color: rgba(239,68,68,.8);
+      font-family: 'Inter', sans-serif; font-size: .8rem;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-logout:hover { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.6); color: #EF4444; }
+
+    /* ── Main layout ── */
+    .page {
+      position: relative; z-index: 5;
+      max-width: 1280px; margin: 0 auto;
+      padding: 2rem 2rem 3rem;
+    }
+
+    /* ── Stat cards ── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem; margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px; padding: 1.4rem 1.6rem;
+      display: flex; flex-direction: column; gap: .4rem;
+      backdrop-filter: blur(12px);
+      transition: border-color .25s;
+    }
+    .stat-card:hover { border-color: rgba(124,58,237,.3); }
+
+    .stat-icon { font-size: 1.4rem; margin-bottom: .2rem; }
+
+    .stat-num {
+      font-size: 2.2rem; font-weight: 800;
+      background: linear-gradient(125deg, var(--primary-light), var(--secondary));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; line-height: 1;
+    }
+
+    .stat-name { font-size: .82rem; color: var(--muted); }
+
+    /* ── Sections ── */
+    .section-title {
+      font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
+
+    .pill {
+      padding: .2rem .65rem;
+      background: rgba(124,58,237,.15);
+      border-radius: 100px; font-size: .75rem; font-weight: 600;
+      color: var(--primary-light);
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex; gap: .75rem; margin-bottom: 1.25rem;
+      flex-wrap: wrap; align-items: center;
+    }
+
+    .search-wrap {
+      flex: 1; min-width: 220px; position: relative;
+    }
+
+    .search-icon {
+      position: absolute; left: .85rem; top: 50%;
+      transform: translateY(-50%); color: var(--muted); font-size: .9rem;
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%; padding: .7rem 1rem .7rem 2.25rem;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-family: 'Inter', sans-serif; font-size: .9rem;
+      outline: none; transition: border .2s, box-shadow .2s;
+    }
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(124,58,237,.1);
+    }
+    .search-input::placeholder { color: rgba(148,163,184,.4); }
+
+    .btn-sm {
+      padding: .65rem 1.1rem; border-radius: 10px;
+      font-family: 'Inter', sans-serif; font-size: .82rem; font-weight: 600;
+      cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: .4rem;
+      white-space: nowrap;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border); color: var(--muted);
+    }
+    .btn-outline:hover { border-color: rgba(255,255,255,.25); color: var(--text); background: rgba(255,255,255,.04); }
+
+    .btn-danger {
+      background: rgba(239,68,68,.08);
+      border: 1px solid rgba(239,68,68,.25); color: #EF4444;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.5); }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px; overflow: hidden;
+      backdrop-filter: blur(12px);
+      margin-bottom: 2.5rem;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead { background: rgba(255,255,255,.035); }
+
+    th {
+      padding: .9rem 1.25rem; text-align: left;
+      font-size: .78rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: .5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td { padding: .9rem 1.25rem; font-size: .9rem; border-bottom: 1px solid rgba(255,255,255,.045); }
+
+    tbody tr { transition: background .15s; }
+    tbody tr:hover { background: rgba(124,58,237,.06); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .ticket-badge {
+      display: inline-block; padding: .25rem .65rem;
+      background: rgba(124,58,237,.15);
+      border: 1px solid rgba(124,58,237,.3);
+      border-radius: 6px; font-size: .8rem; font-weight: 700;
+      color: var(--primary-light); letter-spacing: .5px;
+    }
+
+    .winner-row td { background: rgba(251,191,36,.06) !important; }
+    .winner-badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .2rem .6rem;
+      background: rgba(251,191,36,.15);
+      border: 1px solid rgba(251,191,36,.3);
+      border-radius: 6px; font-size: .75rem; font-weight: 700;
+      color: #FBB024;
+    }
+
+    .btn-del {
+      padding: .3rem .6rem; background: transparent;
+      border: 1px solid rgba(239,68,68,.2); border-radius: 6px;
+      color: rgba(239,68,68,.6); font-size: .8rem; cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-del:hover { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.5); color: #EF4444; }
+
+    .empty-state {
+      text-align: center; padding: 3.5rem 1rem; color: var(--muted);
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-title { font-size: 1rem; font-weight: 600; margin-bottom: .4rem; color: var(--text); }
+    .empty-sub   { font-size: .85rem; }
+
+    /* ── Sorteo Section ── */
+    .sorteo-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px; padding: 2.5rem;
+      backdrop-filter: blur(12px);
+      text-align: center;
+    }
+
+    .sorteo-header { margin-bottom: 2rem; }
+    .sorteo-title  { font-size: 1.5rem; font-weight: 800; margin-bottom: .5rem; }
+    .sorteo-sub    { color: var(--muted); font-size: .9rem; }
+
+    .slot-machine {
+      background: rgba(0,0,0,.3);
+      border: 1.5px solid rgba(124,58,237,.25);
+      border-radius: 20px; padding: 2rem;
+      margin: 0 auto 2rem; max-width: 420px;
+      min-height: 130px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+
+    .slot-machine::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(124,58,237,.04), rgba(236,72,153,.04));
+    }
+
+    .slot-idle {
+      font-size: 1rem; color: rgba(148,163,184,.5);
+    }
+
+    .slot-name {
+      font-size: 1.8rem; font-weight: 900;
+      background: linear-gradient(125deg, var(--primary-light), var(--secondary));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: -1px; line-height: 1.2;
+      transition: transform .08s ease;
+      text-align: center;
+    }
+
+    .btn-sortear {
+      padding: 1.1rem 3rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: none; border-radius: 14px;
+      color: #fff; font-size: 1.1rem; font-weight: 800;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      position: relative; overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+      display: inline-flex; align-items: center; gap: .6rem;
+    }
+
+    .btn-sortear::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.15), transparent);
+    }
+
+    .btn-sortear:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(124,58,237,.5);
+    }
+
+    .btn-sortear:active:not(:disabled) { transform: translateY(-1px); }
+
+    .btn-sortear:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-sortear .ripple {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,.25);
+      transform: scale(0); animation: rippleAnim .6s linear;
+    }
+
+    @keyframes rippleAnim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* ── Winner modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(8,8,26,.88);
+      backdrop-filter: blur(18px);
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+
+    .modal-box {
+      background: linear-gradient(145deg, rgba(20,10,50,.95), rgba(8,8,26,.98));
+      border: 1px solid rgba(124,58,237,.3);
+      border-radius: 28px; padding: 3rem 2.5rem;
+      width: 100%; max-width: 460px;
+      text-align: center;
+      position: relative; overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset, 0 40px 80px rgba(0,0,0,.5);
+      animation: popIn .5s cubic-bezier(.175,.885,.32,1.275);
+    }
+
+    .modal-box::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,58,237,.15), transparent);
+      pointer-events: none;
+    }
+
+    canvas#confetti-canvas {
+      position: fixed; inset: 0; pointer-events: none; z-index: 300;
+    }
+
+    .winner-trophy {
+      font-size: 4rem; margin-bottom: 1rem;
+      animation: bounce 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes bounce {
+      from { transform: translateY(0) rotate(-5deg); }
+      to   { transform: translateY(-12px) rotate(5deg); }
+    }
+
+    .winner-label {
+      font-size: .78rem; text-transform: uppercase; letter-spacing: 2px;
+      color: var(--warning); font-weight: 700; margin-bottom: .75rem;
+    }
+
+    .winner-name {
+      font-size: 2.2rem; font-weight: 900; letter-spacing: -1px;
+      background: linear-gradient(125deg, #fff 0%, rgba(167,139,250,1) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: .5rem;
+    }
+
+    .winner-ticket {
+      display: inline-block; padding: .3rem .9rem;
+      background: rgba(124,58,237,.15);
+      border: 1px solid rgba(124,58,237,.3);
+      border-radius: 8px; font-size: .85rem; font-weight: 700;
+      color: var(--primary-light); margin-bottom: .5rem;
+    }
+
+    .winner-email { font-size: .85rem; color: var(--muted); margin-bottom: 2rem; }
+
+    .modal-btns { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+
+    .btn-primary-sm {
+      padding: .75rem 1.75rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: none; border-radius: 10px;
+      color: #fff; font-size: .9rem; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .btn-primary-sm:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,58,237,.4); }
+
+    .btn-ghost-sm {
+      padding: .75rem 1.5rem;
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,.15); border-radius: 10px;
+      color: var(--text); font-family: 'Inter', sans-serif;
+      font-size: .9rem; cursor: pointer; transition: all .2s;
+    }
+    .btn-ghost-sm:hover { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.05); }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .page { padding: 1.25rem 1rem; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      th:nth-child(3), td:nth-child(3),
+      th:nth-child(4), td:nth-child(4) { display: none; }
+      nav { padding: 1rem 1.25rem; }
+    }
+
+    /* ── Confirm dialog ── */
+    .confirm-overlay {
+      position: fixed; inset: 0; z-index: 400;
+      background: rgba(8,8,26,.88); backdrop-filter: blur(14px);
+      display: none; align-items: center; justify-content: center;
+    }
+    .confirm-overlay.show { display: flex; }
+
+    .confirm-box {
+      background: rgba(20,10,40,.98);
+      border: 1px solid rgba(239,68,68,.2);
+      border-radius: 20px; padding: 2rem;
+      width: 100%; max-width: 360px; text-align: center;
+      box-shadow: 0 30px 60px rgba(0,0,0,.4);
+      animation: popIn .35s cubic-bezier(.175,.885,.32,1.275);
+    }
+
+    .confirm-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .confirm-title { font-size: 1.2rem; font-weight: 700; margin-bottom: .5rem; }
+    .confirm-sub   { font-size: .85rem; color: var(--muted); margin-bottom: 1.5rem; }
+    .confirm-btns  { display: flex; gap: .75rem; }
+
+    .btn-cancel {
+      flex: 1; padding: .7rem;
+      background: transparent;
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-family: 'Inter', sans-serif;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-cancel:hover { background: rgba(255,255,255,.05); }
+
+    .btn-confirm-del {
+      flex: 1; padding: .7rem;
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3); border-radius: 10px;
+      color: #EF4444; font-family: 'Inter', sans-serif; font-weight: 700;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-confirm-del:hover { background: rgba(239,68,68,.2); border-color: #EF4444; }
+
+    @keyframes popIn {
+      from { transform: scale(.88); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+<div class="bg-wrap"></div>
+
+<!-- ── Login Gate ── -->
+<div id="login-gate">
+  <div class="login-box">
+    <div class="login-icon">🔐</div>
+    <h1 class="login-title">Panel de Administración</h1>
+    <p class="login-sub">Ingresa la contraseña para acceder al sorteo</p>
+    <input type="password" class="login-input" id="pw-input"
+           placeholder="Contraseña" autocomplete="current-password" />
+    <button class="btn-login" onclick="doLogin()">Ingresar</button>
+    <p class="login-hint">Contraseña por defecto: <strong>admin1234</strong></p>
+  </div>
+</div>
+
+<!-- ── App ── -->
+<div id="app">
+
+  <nav>
+    <div class="logo">
+      <div class="logo-icon">🎰</div>
+      SorteoApp · Admin
+    </div>
+    <div class="nav-right">
+      <span class="nav-badge" id="nav-total">0 participantes</span>
+      <a href="index.html" style="font-size:.82rem;color:var(--muted);text-decoration:none;transition:color .2s"
+         onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
+        Ver landing →
+      </a>
+      <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </nav>
+
+  <div class="page">
+
+    <!-- Stats row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-name">Total participantes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-num" id="stat-today">0</div>
+        <div class="stat-name">Registrados hoy</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-num" id="stat-winners">0</div>
+        <div class="stat-name">Sorteos realizados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🎫</div>
+        <div class="stat-num" id="stat-last">—</div>
+        <div class="stat-name">Último ticket</div>
+      </div>
+    </div>
+
+    <!-- Participants -->
+    <div class="section-title">
+      Participantes <span class="pill" id="pill-count">0</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="search-input"
+               placeholder="Buscar por nombre, email o ticket…" oninput="renderTable()" />
+      </div>
+      <button class="btn-sm btn-outline" onclick="exportCSV()">⬇ Exportar CSV</button>
+      <button class="btn-sm btn-danger"  onclick="confirmClear()">🗑 Borrar todo</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Ticket</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th>Fecha</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="7"><div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <div class="empty-title">Sin participantes aún</div>
+            <div class="empty-sub">Cuando alguien se registre aparecerá aquí</div>
+          </div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sorteo -->
+    <div class="sorteo-section">
+      <div class="sorteo-header">
+        <h2 class="sorteo-title">🎰 Realizar Sorteo</h2>
+        <p class="sorteo-sub">El sistema seleccionará un ganador de forma aleatoria y transparente</p>
+      </div>
+
+      <div class="slot-machine" id="slot-machine">
+        <div class="slot-idle" id="slot-idle">Presiona el botón para iniciar el sorteo</div>
+        <div class="slot-name" id="slot-name" style="display:none"></div>
+      </div>
+
+      <button class="btn-sortear" id="btn-sortear" onclick="iniciarSorteo(this)">
+        <span>🎯</span> Realizar Sorteo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Winner Modal ── -->
+<div class="modal-overlay" id="winner-modal">
+  <div class="modal-box">
+    <div class="winner-trophy">🏆</div>
+    <div class="winner-label">¡Ganador del Sorteo!</div>
+    <div class="winner-name"  id="wm-name">—</div>
+    <div class="winner-ticket" id="wm-ticket">#00000</div>
+    <div class="winner-email"  id="wm-email">—</div>
+    <div class="modal-btns">
+      <button class="btn-primary-sm" onclick="closeWinnerModal()">¡Genial! 🎉</button>
+      <button class="btn-ghost-sm"   onclick="otroSorteo()">Sortear de nuevo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm clear ── -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">⚠️</div>
+    <div class="confirm-title">¿Borrar todos los datos?</div>
+    <div class="confirm-sub">Esta acción no se puede deshacer. Se eliminarán todos los participantes registrados.</div>
+    <div class="confirm-btns">
+      <button class="btn-cancel"      onclick="document.getElementById('confirm-overlay').classList.remove('show')">Cancelar</button>
+      <button class="btn-confirm-del" onclick="clearAll()">Sí, borrar todo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ──────────────────────────────────────────
+     Configuración
+  ────────────────────────────────────────── */
+  const PASS    = 'admin1234';   // ← Cambia la contraseña aquí
+  const KEY     = 'sorteo_v1_participants';
+  const WIN_KEY = 'sorteo_v1_winners';
+  const SESS    = 'sorteo_auth';
+
+  /* ──────────────────────────────────────────
+     Auth
+  ────────────────────────────────────────── */
+  function doLogin() {
+    const v = document.getElementById('pw-input').value;
+    if (v === PASS) {
+      sessionStorage.setItem(SESS, '1');
+      document.getElementById('login-gate').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      refresh();
+    } else {
+      const inp = document.getElementById('pw-input');
+      inp.classList.remove('shake');
+      void inp.offsetWidth;
+      inp.classList.add('shake');
+      inp.value = '';
+    }
+  }
+
+  function doLogout() {
+    sessionStorage.removeItem(SESS);
+    location.reload();
+  }
+
+  document.getElementById('pw-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  // Auto-login if session exists
+  if (sessionStorage.getItem(SESS) === '1') {
+    document.getElementById('login-gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }
+
+  /* ──────────────────────────────────────────
+     Storage helpers
+  ────────────────────────────────────────── */
+  function getAll()      { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } }
+  function getWinners()  { try { return JSON.parse(localStorage.getItem(WIN_KEY) || '[]'); } catch { return []; } }
+  function saveAll(list) { localStorage.setItem(KEY, JSON.stringify(list)); }
+
+  function addWinner(p) {
+    const ws = getWinners();
+    ws.push({ ...p, drawnAt: new Date().toISOString() });
+    localStorage.setItem(WIN_KEY, JSON.stringify(ws));
+  }
+
+  /* ──────────────────────────────────────────
+     Stats
+  ────────────────────────────────────────── */
+  function updateStats(list) {
+    const today = new Date().toDateString();
+    const todayCount = list.filter(p => new Date(p.fecha).toDateString() === today).length;
+    const lastTicket = list.length ? '#' + list[list.length - 1].ticket : '—';
+
+    document.getElementById('stat-total').textContent   = list.length;
+    document.getElementById('stat-today').textContent   = todayCount;
+    document.getElementById('stat-winners').textContent = getWinners().length;
+    document.getElementById('stat-last').textContent    = lastTicket;
+    document.getElementById('nav-total').textContent    = `${list.length} participante${list.length !== 1 ? 's' : ''}`;
+  }
+
+  /* ──────────────────────────────────────────
+     Table
+  ────────────────────────────────────────── */
+  let pendingDeleteId = null;
+
+  function renderTable() {
+    const all    = getAll();
+    const query  = document.getElementById('search-input').value.toLowerCase().trim();
+    const wins   = getWinners().map(w => w.id);
+    const data   = query
+      ? all.filter(p => p.nombre.toLowerCase().includes(query) ||
+                        p.email.toLowerCase().includes(query)  ||
+                        p.ticket.includes(query))
+      : all;
+
+    document.getElementById('pill-count').textContent = data.length;
+
+    const tbody = document.getElementById('table-body');
+
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+        <div class="empty-icon">${query ? '🔍' : '📋'}</div>
+        <div class="empty-title">${query ? 'Sin resultados' : 'Sin participantes aún'}</div>
+        <div class="empty-sub">${query ? 'Intenta con otro término de búsqueda' : 'Cuando alguien se registre aparecerá aquí'}</div>
+      </div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map((p, i) => {
+      const isWinner = wins.includes(p.id);
+      const fecha    = new Date(p.fecha).toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' });
+      return `
+        <tr class="${isWinner ? 'winner-row' : ''}">
+          <td style="color:var(--muted);font-size:.82rem">${i + 1}</td>
+          <td><span class="ticket-badge">#${p.ticket}</span>
+              ${isWinner ? '<span class="winner-badge" style="margin-left:.4rem">🏆 Ganador</span>' : ''}
+          </td>
+          <td style="font-weight:600">${esc(p.nombre)}</td>
+          <td style="color:var(--muted)">${esc(p.email)}</td>
+          <td style="color:var(--muted)">${p.telefono ? esc(p.telefono) : '<span style="opacity:.4">—</span>'}</td>
+          <td style="color:var(--muted);font-size:.82rem">${fecha}</td>
+          <td>
+            <button class="btn-del" onclick="confirmDelete('${p.id}')">✕</button>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function confirmDelete(id) {
+    pendingDeleteId = id;
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay show';
+    overlay.id = 'del-one-overlay';
+    overlay.innerHTML = `<div class="confirm-box">
+      <div class="confirm-icon">🗑</div>
+      <div class="confirm-title">¿Eliminar participante?</div>
+      <div class="confirm-sub">Esta acción no se puede deshacer.</div>
+      <div class="confirm-btns">
+        <button class="btn-cancel" onclick="document.getElementById('del-one-overlay').remove()">Cancelar</button>
+        <button class="btn-confirm-del" onclick="deleteOne()">Eliminar</button>
+      </div>
+    </div>`;
+    document.body.appendChild(overlay);
+  }
+
+  function deleteOne() {
+    const list = getAll().filter(p => p.id !== pendingDeleteId);
+    saveAll(list);
+    document.getElementById('del-one-overlay').remove();
+    refresh();
+  }
+
+  /* ──────────────────────────────────────────
+     Export CSV
+  ────────────────────────────────────────── */
+  function exportCSV() {
+    const list = getAll();
+    if (!list.length) return alert('No hay participantes para exportar.');
+
+    const header = ['Ticket','Nombre','Email','Teléfono','Fecha de registro'];
+    const rows   = list.map(p => [
+      '#' + p.ticket,
+      p.nombre,
+      p.email,
+      p.telefono || '',
+      new Date(p.fecha).toLocaleString('es')
+    ]);
+
+    const csv = [header, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `participantes_sorteo_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /* ──────────────────────────────────────────
+     Clear all
+  ────────────────────────────────────────── */
+  function confirmClear() {
+    document.getElementById('confirm-overlay').classList.add('show');
+  }
+
+  function clearAll() {
+    localStorage.removeItem(KEY);
+    localStorage.removeItem(WIN_KEY);
+    document.getElementById('confirm-overlay').classList.remove('show');
+    refresh();
+  }
+
+  /* ──────────────────────────────────────────
+     Sorteo — Slot machine
+  ────────────────────────────────────────── */
+  let sorteoRunning = false;
+
+  function iniciarSorteo(btn) {
+    if (sorteoRunning) return;
+
+    const list = getAll();
+    if (list.length < 1) {
+      alert('No hay participantes registrados todavía.');
+      return;
+    }
+
+    sorteoRunning = true;
+    btn.disabled  = true;
+
+    // Ripple
+    const r = document.createElement('span');
+    r.className = 'ripple';
+    r.style.cssText = `width:200px;height:200px;left:50%;top:50%;margin-left:-100px;margin-top:-100px;`;
+    btn.appendChild(r);
+    setTimeout(() => r.remove(), 700);
+
+    // Show slot
+    document.getElementById('slot-idle').style.display = 'none';
+    const slotName = document.getElementById('slot-name');
+    slotName.style.display = 'block';
+
+    const names = list.map(p => p.nombre);
+    let speed   = 60;
+    let elapsed = 0;
+    const total = 5500;
+    let timer;
+
+    function tick() {
+      const r = names[Math.floor(Math.random() * names.length)];
+      slotName.textContent = r;
+      slotName.style.transform = 'scale(1.06)';
+      setTimeout(() => { slotName.style.transform = 'scale(1)'; }, speed * 0.25);
+
+      elapsed += speed;
+
+      if (elapsed < total) {
+        if (elapsed > total * 0.55) {
+          speed = Math.min(speed * 1.07, 550);
+        }
+        timer = setTimeout(tick, speed);
+      } else {
+        finalizarSorteo(list, slotName, btn);
+      }
+    }
+    tick();
+  }
+
+  function finalizarSorteo(list, slotName, btn) {
+    const winner = list[Math.floor(Math.random() * list.length)];
+    slotName.textContent = winner.nombre;
+
+    // Highlight animation
+    slotName.style.transform = 'scale(1.15)';
+    setTimeout(() => { slotName.style.transform = 'scale(1)'; }, 300);
+
+    addWinner(winner);
+    refresh();
+
+    // Launch confetti then show modal
+    launchConfetti();
+    setTimeout(() => showWinnerModal(winner), 700);
+
+    btn.disabled   = false;
+    sorteoRunning  = false;
+  }
+
+  function otroSorteo() {
+    closeWinnerModal();
+    document.getElementById('slot-idle').style.display = 'block';
+    document.getElementById('slot-name').style.display = 'none';
+    document.getElementById('slot-name').textContent   = '';
+  }
+
+  /* ──────────────────────────────────────────
+     Winner modal
+  ────────────────────────────────────────── */
+  function showWinnerModal(winner) {
+    document.getElementById('wm-name').textContent   = winner.nombre;
+    document.getElementById('wm-ticket').textContent = '#' + winner.ticket;
+    document.getElementById('wm-email').textContent  = winner.email;
+    document.getElementById('winner-modal').classList.add('show');
+  }
+
+  function closeWinnerModal() {
+    document.getElementById('winner-modal').classList.remove('show');
+  }
+
+  /* ──────────────────────────────────────────
+     Confetti
+  ────────────────────────────────────────── */
+  function launchConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx    = canvas.getContext('2d');
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#7C3AED','#A78BFA','#EC4899','#10B981','#F59E0B','#3B82F6','#EF4444','#34D399'];
+
+    const particles = Array.from({ length: 180 }, () => ({
+      x:  Math.random() * canvas.width,
+      y:  -20,
+      w:  Math.random() * 14 + 4,
+      h:  Math.random() * 8  + 3,
+      c:  colors[Math.floor(Math.random() * colors.length)],
+      sp: Math.random() * 4  + 2.5,
+      an: Math.random() * Math.PI * 2,
+      sp2: (Math.random() - .5) * .12,
+      sw: Math.random() * .12,
+      swO: Math.random() * Math.PI * 2
+    }));
+
+    let frame = 0;
+    const maxFrames = 200;
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (frame++ > maxFrames) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
+
+      particles.forEach(p => {
+        p.y    += p.sp;
+        p.an   += p.sp2;
+        p.swO  += p.sw;
+        p.x    += Math.sin(p.swO) * 2;
+
+        if (p.y > canvas.height + 20) { p.y = -20; p.x = Math.random() * canvas.width; }
+
+        ctx.save();
+        ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+        ctx.rotate(p.an);
+        const alpha = Math.max(0, 1 - frame / maxFrames);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.c;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  }
+
+  /* ──────────────────────────────────────────
+     Refresh all
+  ────────────────────────────────────────── */
+  function refresh() {
+    const list = getAll();
+    updateStats(list);
+    renderTable();
+  }
+
+  /* ──────────────────────────────────────────
+     Live update (same-tab storage changes)
+  ────────────────────────────────────────── */
+  window.addEventListener('storage', refresh);
+
+  /* Init */
+  if (sessionStorage.getItem(SESS) === '1') refresh();
+</script>
+</body>
+</html>
