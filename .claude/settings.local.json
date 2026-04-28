@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push *)",
+      "Bash(where gh *)",
+      "PowerShell(cmdkey /delete:git:https://github.com 2>&1)",
+      "Bash(git remote *)"
+    ]
+  }
+}
