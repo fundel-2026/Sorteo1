@@ -16,8 +16,8 @@ function iniciarHoja_() {
   let sheet = ss.getSheetByName(HOJA);
   if (!sheet) {
     sheet = ss.insertSheet(HOJA);
-    sheet.appendRow(['Fecha', 'Nombre', 'Email', 'Teléfono', 'Ticket', 'ID']);
-    sheet.getRange(1, 1, 1, 6).setFontWeight('bold')
+    sheet.appendRow(['Fecha', 'Nombre', 'Email', 'Teléfono', 'Curso', 'Ticket', 'ID']);
+    sheet.getRange(1, 1, 1, 7).setFontWeight('bold')
          .setBackground('#7C3AED').setFontColor('#ffffff');
   }
   return sheet;
@@ -41,7 +41,7 @@ function listarParticipantes_() {
     let participants = [];
 
     if (lastRow > 1) {
-      const data = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+      const data = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
       participants = data
         .filter(r => r[2])
         .map(r => ({
@@ -49,8 +49,9 @@ function listarParticipantes_() {
           nombre:   String(r[1]),
           email:    String(r[2]),
           telefono: String(r[3]),
-          ticket:   String(r[4]),
-          id:       String(r[5])
+          curso:    String(r[4]),
+          ticket:   String(r[5]),
+          id:       String(r[6])
         }));
     }
 
@@ -82,6 +83,7 @@ function agregarParticipante_(p) {
       p.nombre    || '',
       p.email     || '',
       p.telefono  || '',
+      p.curso     || '',
       p.ticket    || '',
       p.id        || ''
     ]);

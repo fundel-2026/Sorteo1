@@ -227,7 +227,7 @@
         <thead>
           <tr>
             <th>#</th><th>Ticket</th><th>Nombre</th><th>Correo</th>
-            <th>Teléfono</th><th>Fecha</th><th></th>
+            <th>Curso</th><th>Teléfono</th><th>Fecha</th><th></th>
           </tr>
         </thead>
         <tbody id="table-body">
@@ -396,6 +396,7 @@
         <td><span class="ticket-badge">#${p.ticket}</span>${isWin?'<span class="winner-badge" style="margin-left:.4rem">🏆 Ganador</span>':''}</td>
         <td style="font-weight:600">${esc(p.nombre)}</td>
         <td style="color:var(--muted)">${esc(p.email)}</td>
+        <td style="color:var(--muted)">${p.curso?esc(p.curso):'<span style="opacity:.4">—</span>'}</td>
         <td style="color:var(--muted)">${p.telefono?esc(p.telefono):'<span style="opacity:.4">—</span>'}</td>
         <td style="color:var(--muted);font-size:.82rem">${fecha}</td>
         <td>${USE_REMOTE?'':'<button class="btn-del" onclick="deleteOne(\''+p.id+'\')">✕</button>'}</td>

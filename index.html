@@ -239,6 +239,11 @@
           <label for="f-phone">Teléfono <span class="optional">(opcional)</span></label>
           <input type="tel" id="f-phone" placeholder="+1 234 567 8900" autocomplete="tel" />
         </div>
+        <div class="form-group">
+          <label for="f-curso">Curso de interés</label>
+          <input type="text" id="f-curso" placeholder="Ej: Diseño Gráfico, Marketing Digital…" />
+          <div class="err-msg" id="e-curso">Ingresa el curso de tu interés</div>
+        </div>
         <button type="submit" class="btn-primary" id="submit-btn">
           <div class="btn-inner">🎉 Registrarme al sorteo</div>
           <div class="btn-spinner"><div class="spinner-ring"></div></div>
@@ -300,6 +305,7 @@
       nombre:   data.nombre,
       email:    data.email,
       telefono: data.telefono || '',
+      curso:    data.curso   || '',
       ticket:   data.ticket,
       id:       data.id,
       fecha:    data.fecha
@@ -349,10 +355,12 @@
     const name  = document.getElementById('f-name').value.trim();
     const email = document.getElementById('f-email').value.trim();
     const phone = document.getElementById('f-phone').value.trim();
+    const curso = document.getElementById('f-curso').value;
     let ok = true;
 
     if (name.length < 3) { setErr('f-name','e-name'); ok=false; } else clearErr('f-name','e-name');
     if (!validEmail(email)) { setErr('f-email','e-email'); ok=false; } else clearErr('f-email','e-email');
+    if (curso.length < 2) { setErr('f-curso','e-curso'); ok=false; } else clearErr('f-curso','e-curso');
     if (!ok) return;
 
     const btn = document.getElementById('submit-btn');
@@ -371,7 +379,7 @@
       // 2. Generar ticket
       const num    = list.length + 1;
       const ticket = String(num).padStart(5,'0');
-      const participant = { id: Date.now().toString(), nombre: name, email, telefono: phone, ticket, fecha: new Date().toISOString() };
+      const participant = { id: Date.now().toString(), nombre: name, email, telefono: phone, curso, ticket, fecha: new Date().toISOString() };
 
       // 3. Guardar
       if (USE_REMOTE) {
