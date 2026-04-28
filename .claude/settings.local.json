@@ -4,7 +4,9 @@
       "Bash(git push *)",
       "Bash(where gh *)",
       "PowerShell(cmdkey /delete:git:https://github.com 2>&1)",
-      "Bash(git remote *)"
+      "Bash(git remote *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }
